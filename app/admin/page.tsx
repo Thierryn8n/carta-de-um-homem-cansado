@@ -5,6 +5,23 @@ import { Eye, Heart, HeartCrack, MessageCircle, Users, Shield, RefreshCw, MapPin
 import { Button } from "@/components/ui/button"
 import { useNotifications } from "@/hooks/use-notifications"
 
+// Componente de luz de debug no canto
+function DebugLight({ status, message }: { status: "idle" | "loading" | "error" | "success"; message?: string }) {
+  const colors = {
+    idle: "bg-gray-400",
+    loading: "bg-yellow-400 animate-pulse",
+    error: "bg-red-500 animate-bounce",
+    success: "bg-green-500"
+  }
+  
+  return (
+    <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
+      <span className="text-xs text-muted-foreground hidden sm:inline">{message || status}</span>
+      <div className={`w-4 h-4 rounded-full ${colors[status]} shadow-lg border-2 border-white`} title={message || status} />
+    </div>
+  )
+}
+
 interface GeoData {
   city?: string
   region?: string
@@ -96,6 +113,7 @@ export default function AdminPage() {
   if (!authenticated) {
     return (
       <main className="min-h-screen flex items-center justify-center p-4">
+        <DebugLight status={loading ? "loading" : error ? "error" : "idle"} message={error || (loading ? "Carregando..." : "Aguardando")} />
         <div className="w-full max-w-md bg-card border border-border rounded-sm p-8">
           <div className="flex items-center gap-3 mb-6">
             <Shield className="w-6 h-6 text-primary" />
@@ -116,7 +134,18 @@ export default function AdminPage() {
             />
 
             {error && (
-              <p className="text-destructive text-sm mb-4">{error}</p>
+              <div className="bg-destructive/10 border border-destructive/30 rounded p-3 mb-4">
+                <p className="text-destructive text-sm font-medium">{error}</p>
+                <p className="text-destructive/70 text-xs mt-1">
+                  Cache: {new Date().toLocaleTimeString()} | 
+                  <button 
+                    onClick={() => { navigator.serviceWorker?.getRegistrations().then(r => r.forEach(s => s.unregister())); window.location.reload(); }}
+                    className="underline ml-1 hover:text-destructive"
+                  >
+                    Limpar Cache
+                  </button>
+                </p>
+              </div>
             )}
 
             <Button
@@ -134,6 +163,7 @@ export default function AdminPage() {
 
   return (
     <main className="min-h-screen p-4 md:p-8">
+      <DebugLight status={loading ? "loading" : "success"} message={loading ? "Carregando dados..." : "Conectado"} />
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <header className="flex items-center justify-between mb-8">
