@@ -540,6 +540,7 @@ export default function AdminPage() {
               </div>
               <p className="text-2xl font-semibold">{data.stats.totalDislikes}</p>
             </div>
+            {/* Comentários ocultos
             <div className="bg-card border border-border rounded-sm p-4">
               <div className="flex items-center gap-2 text-muted-foreground mb-2">
                 <MessageCircle className="w-4 h-4" />
@@ -547,21 +548,12 @@ export default function AdminPage() {
               </div>
               <p className="text-2xl font-semibold">{data.stats.totalComments}</p>
             </div>
+            */}
           </div>
         )}
 
-        {/* Tabs */}
+        {/* Tabs - Comentários removidos */}
         <div className="flex gap-2 mb-6 border-b border-border pb-4">
-          {/* Comentários desabilitados temporariamente
-          <Button
-            variant={activeTab === "comments" ? "default" : "ghost"}
-            size="sm"
-            onClick={() => setActiveTab("comments")}
-          >
-            <MessageCircle className="w-4 h-4 mr-2" />
-            Comentários
-          </Button>
-          */}
           <Button
             variant={activeTab === "reactions" ? "default" : "ghost"}
             size="sm"
@@ -583,12 +575,6 @@ export default function AdminPage() {
         {/* Content */}
         {data && (
           <div className="space-y-3">
-            {/* Comentários desabilitados temporariamente
-            {activeTab === "comments" && data.comments.map((comment) => (
-              ...
-            ))}
-            */}
-
             {activeTab === "reactions" && data.reactions.map((reaction) => (
               <div key={reaction.id} className="bg-card border border-border rounded-sm p-4">
                 <div className="flex items-center gap-4">
