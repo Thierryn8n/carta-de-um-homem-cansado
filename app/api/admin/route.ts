@@ -13,6 +13,9 @@ interface GeoData {
   country_name?: string
   latitude?: number
   longitude?: number
+  street?: string
+  neighborhood?: string
+  zip?: string
 }
 
 // Cache simples para geolocalização (evita rate limit)
@@ -72,7 +75,10 @@ async function getGeoLocation(ip: string): Promise<GeoData | null> {
       region: data.region,
       country: data.country_name,
       latitude: data.latitude,
-      longitude: data.longitude
+      longitude: data.longitude,
+      street: data.street || undefined,
+      neighborhood: data.suburb || data.neighborhood || undefined,
+      zip: data.postal || undefined
     }
 
     geoCache.set(cleanIp, geo)

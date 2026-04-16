@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { Eye, Heart, HeartCrack, MessageCircle, Users, Shield, RefreshCw, MapPin, Bell, BellOff, Smartphone } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useNotifications } from "@/hooks/use-notifications"
+import { MapModal } from "@/components/map-modal"
 
 // Componente de luz de debug no canto
 function DebugLight({ status, message }: { status: "idle" | "loading" | "error" | "success"; message?: string }) {
@@ -28,6 +29,9 @@ interface GeoData {
   country?: string
   latitude?: number
   longitude?: number
+  street?: string
+  neighborhood?: string
+  zip?: string
 }
 
 interface Visitor {
@@ -74,6 +78,8 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [activeTab, setActiveTab] = useState<"visitors" | "reactions" | "comments">("comments")
+  const [selectedGeo, setSelectedGeo] = useState<{geo: GeoData | undefined, ip: string} | null>(null)
+  const [isMapOpen, setIsMapOpen] = useState(false)
   
   const { 
     isSupported, 
@@ -83,6 +89,11 @@ export default function AdminPage() {
     unsubscribe, 
     testNotification 
   } = useNotifications()
+
+  function openMap(geo: GeoData | undefined, ip: string) {
+    setSelectedGeo({ geo, ip })
+    setIsMapOpen(true)
+  }
 
   async function fetchData() {
     if (!secret) return
@@ -317,18 +328,15 @@ export default function AdminPage() {
                     <div className="text-xs text-muted-foreground space-y-1">
                       <p className="flex items-center gap-1 flex-wrap">
                         <span className="font-medium">IP:</span> {comment.ip_address}
-                        <a 
-                          href={getMapLink(comment.geo)} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
+                        <button
+                          onClick={() => openMap(comment.geo, comment.ip_address)}
                           className="inline-flex items-center gap-1 ml-2 text-primary bg-primary/10 px-2 py-0.5 rounded text-xs hover:bg-primary/20 transition-colors cursor-pointer"
-                          onClick={(e) => e.stopPropagation()}
                         >
                           <MapPin className="w-3 h-3" />
                           {comment.geo?.city 
                             ? `${comment.geo.city}, ${comment.geo.region || comment.geo.country}` 
                             : "📍 Localizando..."}
-                        </a>
+                        </button>
                       </p>
                       <p><span className="font-medium">User Agent:</span> {comment.user_agent}</p>
                       <p><span className="font-medium">Data:</span> {formatDate(comment.created_at)}</p>
@@ -349,18 +357,15 @@ export default function AdminPage() {
                   <div className="flex-1">
                     <p className="text-sm text-muted-foreground flex items-center gap-1 flex-wrap">
                       <span className="font-medium">IP:</span> {reaction.ip_address}
-                      <a 
-                        href={getMapLink(reaction.geo)} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
+                      <button
+                        onClick={() => openMap(reaction.geo, reaction.ip_address)}
                         className="inline-flex items-center gap-1 ml-2 text-primary bg-primary/10 px-2 py-0.5 rounded text-xs hover:bg-primary/20 transition-colors cursor-pointer"
-                        onClick={(e) => e.stopPropagation()}
                       >
                         <MapPin className="w-3 h-3" />
                         {reaction.geo?.city 
                           ? `${reaction.geo.city}, ${reaction.geo.country || reaction.geo.region}` 
                           : "📍 Localizando..."}
-                      </a>
+                      </button>
                     </p>
                     <p className="text-xs text-muted-foreground/60">
                       {formatDate(reaction.created_at)}
@@ -375,18 +380,15 @@ export default function AdminPage() {
                 <div className="text-sm space-y-1">
                   <p className="flex items-center gap-1 flex-wrap">
                     <span className="font-medium text-muted-foreground">IP:</span> {visitor.ip_address}
-                    <a 
-                      href={getMapLink(visitor.geo)} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
+                    <button
+                      onClick={() => openMap(visitor.geo, visitor.ip_address)}
                       className="inline-flex items-center gap-1 ml-2 text-primary bg-primary/10 px-2 py-0.5 rounded text-xs hover:bg-primary/20 transition-colors cursor-pointer"
-                      onClick={(e) => e.stopPropagation()}
                     >
                       <MapPin className="w-3 h-3" />
                       {visitor.geo?.city 
                         ? `${visitor.geo.city}, ${visitor.geo.region || visitor.geo.country}` 
                         : "📍 Localizando..."}
-                    </a>
+                    </button>
                   </p>
                   <p className="text-xs text-muted-foreground/60 truncate">
                     <span className="font-medium">User Agent:</span> {visitor.user_agent}
@@ -410,6 +412,14 @@ export default function AdminPage() {
           </div>
         )}
       </div>
+      
+      {/* Map Modal */}
+      <MapModal
+        isOpen={isMapOpen}
+        onClose={() => setIsMapOpen(false)}
+        geo={selectedGeo?.geo || null}
+        ip={selectedGeo?.ip || ""}
+      />
     </main>
   )
 }
