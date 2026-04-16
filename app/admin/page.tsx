@@ -83,6 +83,18 @@ export default function AdminPage() {
     return new Date(dateString).toLocaleString("pt-BR")
   }
 
+  // Gera link do Google Maps com coordenadas ou cidade
+  function getMapLink(geo?: GeoData): string {
+    if (!geo) return "#"
+    if (geo.latitude && geo.longitude) {
+      return `https://www.google.com/maps?q=${geo.latitude},${geo.longitude}`
+    }
+    if (geo.city) {
+      return `https://www.google.com/maps/search/${encodeURIComponent(geo.city + " " + (geo.country || ""))}`
+    }
+    return "#"
+  }
+
   if (!authenticated) {
     return (
       <main className="min-h-screen flex items-center justify-center p-4">
@@ -215,12 +227,18 @@ export default function AdminPage() {
                     <div className="text-xs text-muted-foreground space-y-1">
                       <p className="flex items-center gap-1 flex-wrap">
                         <span className="font-medium">IP:</span> {comment.ip_address}
-                        <span className="inline-flex items-center gap-1 ml-2 text-primary bg-primary/10 px-2 py-0.5 rounded text-xs">
+                        <a 
+                          href={getMapLink(comment.geo)} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 ml-2 text-primary bg-primary/10 px-2 py-0.5 rounded text-xs hover:bg-primary/20 transition-colors cursor-pointer"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <MapPin className="w-3 h-3" />
                           {comment.geo?.city 
                             ? `${comment.geo.city}, ${comment.geo.region || comment.geo.country}` 
                             : "📍 Localizando..."}
-                        </span>
+                        </a>
                       </p>
                       <p><span className="font-medium">User Agent:</span> {comment.user_agent}</p>
                       <p><span className="font-medium">Data:</span> {formatDate(comment.created_at)}</p>
@@ -241,12 +259,18 @@ export default function AdminPage() {
                   <div className="flex-1">
                     <p className="text-sm text-muted-foreground flex items-center gap-1 flex-wrap">
                       <span className="font-medium">IP:</span> {reaction.ip_address}
-                      <span className="inline-flex items-center gap-1 ml-2 text-primary bg-primary/10 px-2 py-0.5 rounded text-xs">
+                      <a 
+                        href={getMapLink(reaction.geo)} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 ml-2 text-primary bg-primary/10 px-2 py-0.5 rounded text-xs hover:bg-primary/20 transition-colors cursor-pointer"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <MapPin className="w-3 h-3" />
                         {reaction.geo?.city 
                           ? `${reaction.geo.city}, ${reaction.geo.country || reaction.geo.region}` 
                           : "📍 Localizando..."}
-                      </span>
+                      </a>
                     </p>
                     <p className="text-xs text-muted-foreground/60">
                       {formatDate(reaction.created_at)}
@@ -261,12 +285,18 @@ export default function AdminPage() {
                 <div className="text-sm space-y-1">
                   <p className="flex items-center gap-1 flex-wrap">
                     <span className="font-medium text-muted-foreground">IP:</span> {visitor.ip_address}
-                    <span className="inline-flex items-center gap-1 ml-2 text-primary bg-primary/10 px-2 py-0.5 rounded text-xs">
+                    <a 
+                      href={getMapLink(visitor.geo)} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 ml-2 text-primary bg-primary/10 px-2 py-0.5 rounded text-xs hover:bg-primary/20 transition-colors cursor-pointer"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <MapPin className="w-3 h-3" />
                       {visitor.geo?.city 
                         ? `${visitor.geo.city}, ${visitor.geo.region || visitor.geo.country}` 
                         : "📍 Localizando..."}
-                    </span>
+                    </a>
                   </p>
                   <p className="text-xs text-muted-foreground/60 truncate">
                     <span className="font-medium">User Agent:</span> {visitor.user_agent}
