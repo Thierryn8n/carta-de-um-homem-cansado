@@ -330,12 +330,18 @@ export default function AdminPage() {
                         <span className="font-medium">IP:</span> {comment.ip_address}
                         <button
                           onClick={() => openMap(comment.geo, comment.ip_address)}
-                          className="inline-flex items-center gap-1 ml-2 text-primary bg-primary/10 px-2 py-0.5 rounded text-xs hover:bg-primary/20 transition-colors cursor-pointer"
+                          className={`inline-flex items-center gap-1 ml-2 px-2 py-0.5 rounded text-xs transition-colors cursor-pointer ${
+                            comment.geo?.city?.includes("Desconhecido") || comment.geo?.city?.includes("❓")
+                              ? "bg-yellow-500/20 text-yellow-600 hover:bg-yellow-500/30"
+                              : comment.geo?.city?.includes("Local/Rede")
+                              ? "bg-gray-500/20 text-gray-500"
+                              : "text-primary bg-primary/10 hover:bg-primary/20"
+                          }`}
                         >
                           <MapPin className="w-3 h-3" />
                           {comment.geo?.city 
-                            ? `${comment.geo.city}, ${comment.geo.region || comment.geo.country}` 
-                            : "📍 Localizando..."}
+                            ? `${comment.geo.city}${comment.geo.region ? `, ${comment.geo.region}` : ""}` 
+                            : "⏳ Buscando..."}
                         </button>
                       </p>
                       <p><span className="font-medium">User Agent:</span> {comment.user_agent}</p>
@@ -359,12 +365,18 @@ export default function AdminPage() {
                       <span className="font-medium">IP:</span> {reaction.ip_address}
                       <button
                         onClick={() => openMap(reaction.geo, reaction.ip_address)}
-                        className="inline-flex items-center gap-1 ml-2 text-primary bg-primary/10 px-2 py-0.5 rounded text-xs hover:bg-primary/20 transition-colors cursor-pointer"
+                        className={`inline-flex items-center gap-1 ml-2 px-2 py-0.5 rounded text-xs transition-colors cursor-pointer ${
+                          reaction.geo?.city?.includes("Desconhecido") || reaction.geo?.city?.includes("❓")
+                            ? "bg-yellow-500/20 text-yellow-600 hover:bg-yellow-500/30"
+                            : reaction.geo?.city?.includes("Local/Rede")
+                            ? "bg-gray-500/20 text-gray-500"
+                            : "text-primary bg-primary/10 hover:bg-primary/20"
+                        }`}
                       >
                         <MapPin className="w-3 h-3" />
                         {reaction.geo?.city 
-                          ? `${reaction.geo.city}, ${reaction.geo.country || reaction.geo.region}` 
-                          : "📍 Localizando..."}
+                          ? `${reaction.geo.city}${reaction.geo.region ? `, ${reaction.geo.region}` : ""}` 
+                          : "⏳ Buscando..."}
                       </button>
                     </p>
                     <p className="text-xs text-muted-foreground/60">
@@ -382,12 +394,18 @@ export default function AdminPage() {
                     <span className="font-medium text-muted-foreground">IP:</span> {visitor.ip_address}
                     <button
                       onClick={() => openMap(visitor.geo, visitor.ip_address)}
-                      className="inline-flex items-center gap-1 ml-2 text-primary bg-primary/10 px-2 py-0.5 rounded text-xs hover:bg-primary/20 transition-colors cursor-pointer"
+                      className={`inline-flex items-center gap-1 ml-2 px-2 py-0.5 rounded text-xs transition-colors cursor-pointer ${
+                        visitor.geo?.city?.includes("Desconhecido") || visitor.geo?.city?.includes("❓")
+                          ? "bg-yellow-500/20 text-yellow-600 hover:bg-yellow-500/30"
+                          : visitor.geo?.city?.includes("Local/Rede")
+                          ? "bg-gray-500/20 text-gray-500"
+                          : "text-primary bg-primary/10 hover:bg-primary/20"
+                      }`}
                     >
                       <MapPin className="w-3 h-3" />
                       {visitor.geo?.city 
-                        ? `${visitor.geo.city}, ${visitor.geo.region || visitor.geo.country}` 
-                        : "📍 Localizando..."}
+                        ? `${visitor.geo.city}${visitor.geo.region ? `, ${visitor.geo.region}` : ""}` 
+                        : "⏳ Buscando..."}
                     </button>
                   </p>
                   <p className="text-xs text-muted-foreground/60 truncate">

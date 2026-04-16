@@ -33,8 +33,28 @@ function cleanIP(ip: string): string {
   return ip
 }
 
+// Timeout wrapper para fetch
+async function fetchWithTimeout(url: string, timeout = 5000): Promise<Response> {
+  const controller = new AbortController()
+  const id = setTimeout(() => controller.abort(), timeout)
+  
+  try {
+    const response = await fetch(url, { 
+      signal: controller.signal,
+      next: { revalidate: 3600 }
+    })
+    clearTimeout(id)
+    return response
+  } catch (error) {
+    clearTimeout(id)
+    throw error
+  }
+}
+
 async function getGeoLocation(ip: string): Promise<GeoData | null> {
   const cleanIp = cleanIP(ip)
+  
+  console.log(`[Geo] Processando IP: ${cleanIp}`)
   
   // Ignora IPs locais/inválidos
   if (cleanIp === "127.0.0.1" || 
@@ -43,50 +63,94 @@ async function getGeoLocation(ip: string): Promise<GeoData | null> {
       cleanIp.startsWith("10.") ||
       cleanIp.startsWith("172.16.") ||
       cleanIp.startsWith("::1")) {
+    console.log(`[Geo] IP local ignorado: ${cleanIp}`)
     return { city: "🔄 Local/Rede Interna", region: "N/A", country: "N/A" }
   }
 
   // Verifica cache
   if (geoCache.has(cleanIp)) {
+    console.log(`[Geo] Cache hit: ${cleanIp}`)
     return geoCache.get(cleanIp)!
   }
 
+  // Tenta primeira API: ipapi.co
   try {
-    // ipapi.co é gratuito (45 req/min) - sem user-agent para evitar bloqueio
-    const res = await fetch(`https://ipapi.co/${cleanIp}/json/`, {
-      next: { revalidate: 3600 }
-    })
+    console.log(`[Geo] Tentando ipapi.co para ${cleanIp}`)
+    const res = await fetchWithTimeout(`https://ipapi.co/${cleanIp}/json/`, 3000)
 
     if (!res.ok) {
-      console.log(`Geo API error for IP ${cleanIp}: ${res.status}`)
-      return null
+      console.log(`[Geo] ipapi.co erro ${res.status} para ${cleanIp}`)
+      throw new Error(`HTTP ${res.status}`)
     }
 
     const data = await res.json()
     
-    // Verifica se a resposta tem erro
-    if (data.error || !data.city) {
-      console.log(`Geo data error for IP ${cleanIp}:`, data)
-      return null
+    if (data.error) {
+      console.log(`[Geo] ipapi.co retornou erro:`, data.error)
+      throw new Error(data.error)
     }
     
     const geo: GeoData = {
-      city: data.city,
-      region: data.region,
-      country: data.country_name,
+      city: data.city || "Cidade Desconhecida",
+      region: data.region || data.region_code || "",
+      country: data.country_name || data.country || "País Desconhecido",
       latitude: data.latitude,
       longitude: data.longitude,
-      street: data.street || undefined,
-      neighborhood: data.suburb || data.neighborhood || undefined,
-      zip: data.postal || undefined
+      street: data.street || data.road || undefined,
+      neighborhood: data.suburb || data.neighbourhood || data.neighborhood || undefined,
+      zip: data.postal || data.zip || undefined
     }
 
+    console.log(`[Geo] Sucesso ipapi.co: ${geo.city}, ${geo.country}`)
     geoCache.set(cleanIp, geo)
     return geo
+    
   } catch (err) {
-    console.error(`Geo location error for IP ${cleanIp}:`, err)
-    return null
+    console.log(`[Geo] ipapi.co falhou: ${err}`)
   }
+
+  // Fallback: ip-api.com (também gratuito, 45 req/min)
+  try {
+    console.log(`[Geo] Tentando ip-api.com para ${cleanIp}`)
+    const res = await fetchWithTimeout(`http://ip-api.com/json/${cleanIp}?fields=status,message,city,regionName,country,lat,lon,zip,`, 3000)
+
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`)
+    }
+
+    const data = await res.json()
+    
+    if (data.status === "fail") {
+      console.log(`[Geo] ip-api.com falhou:`, data.message)
+      throw new Error(data.message)
+    }
+    
+    const geo: GeoData = {
+      city: data.city || "Cidade Desconhecida",
+      region: data.regionName || "",
+      country: data.country || "País Desconhecido",
+      latitude: data.lat,
+      longitude: data.lon,
+      zip: data.zip || undefined
+    }
+
+    console.log(`[Geo] Sucesso ip-api.com: ${geo.city}, ${geo.country}`)
+    geoCache.set(cleanIp, geo)
+    return geo
+    
+  } catch (err) {
+    console.log(`[Geo] ip-api.com também falhou: ${err}`)
+  }
+
+  // Último fallback: retorna desconhecido mas não fica carregando
+  console.log(`[Geo] Todas APIs falharam para ${cleanIp}`)
+  const fallbackGeo: GeoData = {
+    city: "❓ Desconhecido",
+    region: "",
+    country: "Não foi possível localizar"
+  }
+  geoCache.set(cleanIp, fallbackGeo)
+  return fallbackGeo
 }
 
 export async function GET(request: Request) {
