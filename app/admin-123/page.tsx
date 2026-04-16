@@ -47,6 +47,7 @@ interface Reaction {
   ip_address: string
   reaction_type: "like" | "dislike"
   created_at: string
+  user_agent?: string
   geo?: GeoData
 }
 
@@ -119,6 +120,52 @@ export default function AdminPage() {
 
   function formatDate(dateString: string) {
     return new Date(dateString).toLocaleString("pt-BR")
+  }
+
+  // Extrai nome amigável do dispositivo do User Agent
+  function parseDevice(userAgent: string): { device: string; os: string; browser: string } {
+    const ua = userAgent.toLowerCase()
+    
+    let device = "💻 Desktop"
+    let os = "Sistema Desconhecido"
+    let browser = "Navegador Desconhecido"
+    
+    // Detectar OS
+    if (ua.includes("windows")) os = "Windows"
+    else if (ua.includes("macintosh") || ua.includes("mac os")) os = "macOS"
+    else if (ua.includes("linux")) os = "Linux"
+    else if (ua.includes("android")) os = "Android"
+    else if (ua.includes("iphone") || ua.includes("ipad") || ua.includes("ipod")) os = "iOS"
+    
+    // Detectar dispositivo móvel
+    if (ua.includes("iphone")) device = "📱 iPhone"
+    else if (ua.includes("ipad")) device = "📱 iPad"
+    else if (ua.includes("android")) {
+      if (ua.includes("mobile")) device = "📱 Android"
+      else device = "📱 Android Tablet"
+      
+      // Tentar extrair modelo
+      const samsungMatch = ua.match(/samsung[^;)]+/)
+      const xiaomiMatch = ua.match(/xiaomi[^;)]+/)
+      const motorolaMatch = ua.match(/motorola[^;)]+/)
+      const lgMatch = ua.match(/lg-[^;)]+/)
+      
+      if (samsungMatch) device += ` (${samsungMatch[0].toUpperCase()})`
+      else if (xiaomiMatch) device += ` (${xiaomiMatch[0].toUpperCase()})`
+      else if (motorolaMatch) device += ` (${motorolaMatch[0].toUpperCase()})`
+      else if (lgMatch) device += ` (${lgMatch[0].toUpperCase()})`
+    }
+    else if (ua.includes("windows phone")) device = "📱 Windows Phone"
+    else if (ua.includes("blackberry")) device = "📱 BlackBerry"
+    
+    // Detectar navegador
+    if (ua.includes("chrome") && !ua.includes("edg")) browser = "Chrome"
+    else if (ua.includes("firefox")) browser = "Firefox"
+    else if (ua.includes("safari") && !ua.includes("chrome")) browser = "Safari"
+    else if (ua.includes("edg")) browser = "Edge"
+    else if (ua.includes("opera") || ua.includes("opr")) browser = "Opera"
+    
+    return { device, os, browser }
   }
 
   // Gera link do Google Maps com coordenadas ou cidade
@@ -344,7 +391,19 @@ export default function AdminPage() {
                             : "⏳ Buscando..."}
                         </button>
                       </p>
-                      <p><span className="font-medium">User Agent:</span> {comment.user_agent}</p>
+                      {(() => {
+                        const device = parseDevice(comment.user_agent)
+                        return (
+                          <>
+                            <p className="flex items-center gap-2">
+                              <span className="font-medium">📱 Dispositivo:</span>
+                              <span className="text-primary">{device.device}</span>
+                              <span className="text-muted-foreground">({device.os} • {device.browser})</span>
+                            </p>
+                            <p className="text-muted-foreground/50 truncate text-[10px]">{comment.user_agent}</p>
+                          </>
+                        )
+                      })()}
                       <p><span className="font-medium">Data:</span> {formatDate(comment.created_at)}</p>
                     </div>
                   </div>
@@ -379,9 +438,14 @@ export default function AdminPage() {
                           : "⏳ Buscando..."}
                       </button>
                     </p>
-                    <p className="text-xs text-muted-foreground/60">
-                      {formatDate(reaction.created_at)}
-                    </p>
+                    {(() => {
+                      const device = parseDevice(reaction.user_agent || "")
+                      return (
+                        <p className="text-xs text-muted-foreground/60">
+                          {device.device} • {device.os} • {formatDate(reaction.created_at)}
+                        </p>
+                      )
+                    })()}
                   </div>
                 </div>
               </div>
@@ -408,12 +472,20 @@ export default function AdminPage() {
                         : "⏳ Buscando..."}
                     </button>
                   </p>
-                  <p className="text-xs text-muted-foreground/60 truncate">
-                    <span className="font-medium">User Agent:</span> {visitor.user_agent}
-                  </p>
-                  <p className="text-xs text-muted-foreground/60">
-                    {formatDate(visitor.created_at)}
-                  </p>
+                  {(() => {
+                    const device = parseDevice(visitor.user_agent)
+                    return (
+                      <>
+                        <p className="text-xs">
+                          <span className="font-medium">📱 Dispositivo:</span>{" "}
+                          <span className="text-primary">{device.device}</span>
+                          <span className="text-muted-foreground"> • {device.os} • {device.browser}</span>
+                        </p>
+                        <p className="text-[10px] text-muted-foreground/40 truncate">{visitor.user_agent}</p>
+                        <p className="text-xs text-muted-foreground/60">{formatDate(visitor.created_at)}</p>
+                      </>
+                    )
+                  })()}
                 </div>
               </div>
             ))}
