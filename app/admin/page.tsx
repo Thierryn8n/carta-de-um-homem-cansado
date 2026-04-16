@@ -1,14 +1,23 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Eye, Heart, HeartCrack, MessageCircle, Users, Shield, RefreshCw } from "lucide-react"
+import { Eye, Heart, HeartCrack, MessageCircle, Users, Shield, RefreshCw, MapPin } from "lucide-react"
 import { Button } from "@/components/ui/button"
+
+interface GeoData {
+  city?: string
+  region?: string
+  country?: string
+  latitude?: number
+  longitude?: number
+}
 
 interface Visitor {
   id: string
   ip_address: string
   user_agent: string
   created_at: string
+  geo?: GeoData
 }
 
 interface Reaction {
@@ -16,6 +25,7 @@ interface Reaction {
   ip_address: string
   reaction_type: "like" | "dislike"
   created_at: string
+  geo?: GeoData
 }
 
 interface Comment {
@@ -24,6 +34,7 @@ interface Comment {
   ip_address: string
   user_agent: string
   created_at: string
+  geo?: GeoData
 }
 
 interface AdminData {
@@ -202,7 +213,15 @@ export default function AdminPage() {
                   <div className="flex-1">
                     <p className="text-foreground mb-2">{comment.content}</p>
                     <div className="text-xs text-muted-foreground space-y-1">
-                      <p><span className="font-medium">IP:</span> {comment.ip_address}</p>
+                      <p className="flex items-center gap-1">
+                        <span className="font-medium">IP:</span> {comment.ip_address}
+                        {comment.geo?.city && (
+                          <span className="inline-flex items-center gap-1 ml-2 text-primary">
+                            <MapPin className="w-3 h-3" />
+                            {comment.geo.city}, {comment.geo.region} - {comment.geo.country}
+                          </span>
+                        )}
+                      </p>
                       <p><span className="font-medium">User Agent:</span> {comment.user_agent}</p>
                       <p><span className="font-medium">Data:</span> {formatDate(comment.created_at)}</p>
                     </div>
@@ -220,8 +239,14 @@ export default function AdminPage() {
                     <HeartCrack className="w-5 h-5 text-destructive" />
                   )}
                   <div className="flex-1">
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground flex items-center gap-1">
                       <span className="font-medium">IP:</span> {reaction.ip_address}
+                      {reaction.geo?.city && (
+                        <span className="inline-flex items-center gap-1 ml-2 text-primary">
+                          <MapPin className="w-3 h-3" />
+                          {reaction.geo.city}, {reaction.geo.country}
+                        </span>
+                      )}
                     </p>
                     <p className="text-xs text-muted-foreground/60">
                       {formatDate(reaction.created_at)}
@@ -234,7 +259,15 @@ export default function AdminPage() {
             {activeTab === "visitors" && data.visitors.map((visitor) => (
               <div key={visitor.id} className="bg-card border border-border rounded-sm p-4">
                 <div className="text-sm space-y-1">
-                  <p><span className="font-medium text-muted-foreground">IP:</span> {visitor.ip_address}</p>
+                  <p className="flex items-center gap-1">
+                    <span className="font-medium text-muted-foreground">IP:</span> {visitor.ip_address}
+                    {visitor.geo?.city && (
+                      <span className="inline-flex items-center gap-1 ml-2 text-primary">
+                        <MapPin className="w-3 h-3" />
+                        {visitor.geo.city}, {visitor.geo.region} - {visitor.geo.country}
+                      </span>
+                    )}
+                  </p>
                   <p className="text-xs text-muted-foreground/60 truncate">
                     <span className="font-medium">User Agent:</span> {visitor.user_agent}
                   </p>

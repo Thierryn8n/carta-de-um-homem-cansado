@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { headers } from "next/headers"
 import { NextResponse } from "next/server"
-import { sendNotification } from "@/lib/email"
 
 export async function GET() {
   const supabase = await createClient()
@@ -81,13 +80,6 @@ export async function POST(request: Request) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
-
-  // Envia notificação por email (não bloqueia a resposta)
-  sendNotification({
-    type: type as "like" | "dislike",
-    ip,
-    userAgent: headersList.get("user-agent") || undefined,
-  }).catch(console.error)
 
   return NextResponse.json({ action: "created", type })
 }
