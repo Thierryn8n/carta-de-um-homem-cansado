@@ -122,6 +122,123 @@ export default function AdminPage() {
     return new Date(dateString).toLocaleString("pt-BR")
   }
 
+  // Mapeia códigos Samsung para nomes amigáveis
+  function getSamsungModelName(code: string): string {
+    const samsungModels: Record<string, string> = {
+      // Galaxy S Series
+      "SM-S918": "Galaxy S23 Ultra",
+      "SM-S916": "Galaxy S23+",
+      "SM-S911": "Galaxy S23",
+      "SM-S908": "Galaxy S22 Ultra",
+      "SM-S906": "Galaxy S22+",
+      "SM-S901": "Galaxy S22",
+      "SM-G998": "Galaxy S21 Ultra",
+      "SM-G996": "Galaxy S21+",
+      "SM-G991": "Galaxy S21",
+      "SM-G988": "Galaxy S20 Ultra",
+      "SM-G986": "Galaxy S20+",
+      "SM-G981": "Galaxy S20",
+      "SM-G975": "Galaxy S10+",
+      "SM-G973": "Galaxy S10",
+      "SM-G970": "Galaxy S10e",
+      "SM-G965": "Galaxy S9+",
+      "SM-G960": "Galaxy S9",
+      "SM-G955": "Galaxy S8+",
+      "SM-G950": "Galaxy S8",
+      // Galaxy A Series
+      "SM-A155": "Galaxy A15",
+      "SM-A156": "Galaxy A15 5G",
+      "SM-A145": "Galaxy A14",
+      "SM-A146": "Galaxy A14 5G",
+      "SM-A135": "Galaxy A13",
+      "SM-A136": "Galaxy A13 5G",
+      "SM-A255": "Galaxy A25",
+      "SM-A256": "Galaxy A25 5G",
+      "SM-A346": "Galaxy A34",
+      "SM-A356": "Galaxy A35",
+      "SM-A546": "Galaxy A54",
+      "SM-A556": "Galaxy A55",
+      "SM-A528": "Galaxy A52s",
+      "SM-A525": "Galaxy A52",
+      "SM-A526": "Galaxy A52 5G",
+      "SM-A515": "Galaxy A51",
+      "SM-A516": "Galaxy A51 5G",
+      "SM-A715": "Galaxy A71",
+      "SM-A716": "Galaxy A71 5G",
+      "SM-A725": "Galaxy A72",
+      "SM-A736": "Galaxy A73",
+      // Galaxy M Series
+      "SM-M146": "Galaxy M14",
+      "SM-M156": "Galaxy M15",
+      "SM-M236": "Galaxy M23",
+      "SM-M346": "Galaxy M34",
+      "SM-M556": "Galaxy M55",
+      // Galaxy Note Series
+      "SM-N986": "Galaxy Note 20 Ultra",
+      "SM-N981": "Galaxy Note 20",
+      "SM-N976": "Galaxy Note 10+",
+      "SM-N971": "Galaxy Note 10",
+      "SM-N960": "Galaxy Note 9",
+      "SM-N950": "Galaxy Note 8",
+      // Galaxy Z Fold/Flip
+      "SM-F956": "Galaxy Z Fold 6",
+      "SM-F946": "Galaxy Z Fold 5",
+      "SM-F936": "Galaxy Z Fold 4",
+      "SM-F926": "Galaxy Z Fold 3",
+      "SM-F916": "Galaxy Z Fold 2",
+      "SM-F900": "Galaxy Fold",
+      "SM-F741": "Galaxy Z Flip 6",
+      "SM-F731": "Galaxy Z Flip 5",
+      "SM-F721": "Galaxy Z Flip 4",
+      "SM-F711": "Galaxy Z Flip 3",
+      "SM-F707": "Galaxy Z Flip 5G",
+      "SM-F700": "Galaxy Z Flip",
+      // Galaxy Tab Series
+      "SM-X910": "Galaxy Tab S9 Ultra",
+      "SM-X916": "Galaxy Tab S9+",
+      "SM-X910": "Galaxy Tab S9",
+      "SM-X810": "Galaxy Tab S8 Ultra",
+      "SM-X806": "Galaxy Tab S8+",
+      "SM-X700": "Galaxy Tab S8",
+      // Older Models (GT series)
+      "GT-I950": "Galaxy S4",
+      "GT-I930": "Galaxy S3",
+      "GT-I919": "Galaxy S4 Mini",
+      "GT-I910": "Galaxy S2",
+      "GT-I900": "Galaxy S",
+      "GT-N800": "Galaxy Note 10.1",
+      "GT-N710": "Galaxy Note 2",
+      "GT-N700": "Galaxy Note",
+      "GT-P310": "Galaxy Tab 2 7.0",
+      "GT-P510": "Galaxy Tab 2 10.1",
+    }
+    
+    // Tenta encontrar match exato ou parcial
+    const upperCode = code.toUpperCase()
+    
+    // Match exato primeiro
+    if (samsungModels[upperCode]) {
+      return samsungModels[upperCode]
+    }
+    
+    // Match parcial (código base sem a última letra)
+    const baseCode = upperCode.replace(/[A-Z]$/, "")
+    if (samsungModels[baseCode]) {
+      return samsungModels[baseCode]
+    }
+    
+    // Match por prefixo (primeiros 6 chars)
+    const prefix6 = upperCode.substring(0, 6)
+    for (const [modelCode, name] of Object.entries(samsungModels)) {
+      if (modelCode.startsWith(prefix6)) {
+        return name
+      }
+    }
+    
+    // Se não achou, retorna o código original
+    return upperCode
+  }
+
   // Extrai nome amigável do dispositivo do User Agent
   function parseDevice(userAgent: string): { device: string; os: string; browser: string; model?: string } {
     const ua = userAgent.toLowerCase()
@@ -173,33 +290,40 @@ export default function AdminPage() {
       else device = "📱 Android Tablet"
       
       // Tentar extrair modelo - várias estratégias
+      let samsungCode: string | undefined
+      
       // Samsung - múltiplos padrões
       // Padrão 1: samsung-sm-g973b ou samsung sm-g973b
       const samsungMatch = ua.match(/samsung[-\s]?([^;)\s]+)/)
-      if (samsungMatch) model = samsungMatch[1].toUpperCase()
+      if (samsungMatch) samsungCode = samsungMatch[1].toUpperCase()
       
       // Padrão 2: SM-G973B (formato padrão Samsung)
-      if (!model) {
+      if (!samsungCode) {
         const smMatch = ua.match(/(sm-[a-z]?\d{3}[a-z]?)/i)
-        if (smMatch) model = smMatch[1].toUpperCase()
+        if (smMatch) samsungCode = smMatch[1].toUpperCase()
       }
       
       // Padrão 3: GT-I9500 (modelos antigos Galaxy)
-      if (!model) {
+      if (!samsungCode) {
         const gtMatch = ua.match(/(gt-[i|n|s]\d{4}[a-z]?)/i)
-        if (gtMatch) model = gtMatch[1].toUpperCase()
+        if (gtMatch) samsungCode = gtMatch[1].toUpperCase()
       }
       
       // Padrão 4: SGH-T999 (modelos mais antigos)
-      if (!model) {
+      if (!samsungCode) {
         const sghMatch = ua.match(/(sgh-[a-z]\d{3,4})/i)
-        if (sghMatch) model = sghMatch[1].toUpperCase()
+        if (sghMatch) samsungCode = sghMatch[1].toUpperCase()
       }
       
       // Padrão 5: SCG06 (modelos japoneses)
-      if (!model) {
+      if (!samsungCode) {
         const scgMatch = ua.match(/(sc[g|h|v]\d{2}[a-z]?)/i)
-        if (scgMatch) model = scgMatch[1].toUpperCase()
+        if (scgMatch) samsungCode = scgMatch[1].toUpperCase()
+      }
+      
+      // Converter código Samsung para nome amigável
+      if (samsungCode) {
+        model = getSamsungModelName(samsungCode)
       }
       
       // Xiaomi/Redmi/Poco
