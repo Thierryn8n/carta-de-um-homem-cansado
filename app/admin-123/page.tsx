@@ -78,7 +78,7 @@ export default function AdminPage() {
   const [data, setData] = useState<AdminData | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
-  const [activeTab, setActiveTab] = useState<"visitors" | "reactions" | "comments">("comments")
+  const [activeTab, setActiveTab] = useState<"visitors" | "reactions" | "comments">("visitors")
   const [selectedGeo, setSelectedGeo] = useState<{geo: GeoData | undefined, ip: string} | null>(null)
   const [isMapOpen, setIsMapOpen] = useState(false)
   
@@ -552,6 +552,7 @@ export default function AdminPage() {
 
         {/* Tabs */}
         <div className="flex gap-2 mb-6 border-b border-border pb-4">
+          {/* Comentários desabilitados temporariamente
           <Button
             variant={activeTab === "comments" ? "default" : "ghost"}
             size="sm"
@@ -560,6 +561,7 @@ export default function AdminPage() {
             <MessageCircle className="w-4 h-4 mr-2" />
             Comentários
           </Button>
+          */}
           <Button
             variant={activeTab === "reactions" ? "default" : "ghost"}
             size="sm"
@@ -581,54 +583,11 @@ export default function AdminPage() {
         {/* Content */}
         {data && (
           <div className="space-y-3">
+            {/* Comentários desabilitados temporariamente
             {activeTab === "comments" && data.comments.map((comment) => (
-              <div key={comment.id} className="bg-card border border-border rounded-sm p-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <p className="text-foreground mb-2">{comment.content}</p>
-                    <div className="text-xs text-muted-foreground space-y-1">
-                      <p className="flex items-center gap-1 flex-wrap">
-                        <span className="font-medium">IP:</span> {comment.ip_address}
-                        <button
-                          onClick={() => openMap(comment.geo, comment.ip_address)}
-                          className={`inline-flex items-center gap-1 ml-2 px-2 py-0.5 rounded text-xs transition-colors cursor-pointer ${
-                            comment.geo?.city?.includes("Desconhecido") || comment.geo?.city?.includes("❓")
-                              ? "bg-yellow-500/20 text-yellow-600 hover:bg-yellow-500/30"
-                              : comment.geo?.city?.includes("Local/Rede")
-                              ? "bg-gray-500/20 text-gray-500"
-                              : "text-primary bg-primary/10 hover:bg-primary/20"
-                          }`}
-                        >
-                          <MapPin className="w-3 h-3" />
-                          {comment.geo?.city 
-                            ? `${comment.geo.city}${comment.geo.region ? `, ${comment.geo.region}` : ""}` 
-                            : "⏳ Buscando..."}
-                        </button>
-                      </p>
-                      {(() => {
-                        const device = parseDevice(comment.user_agent)
-                        return (
-                          <>
-                            <p className="flex items-center gap-2 flex-wrap">
-                              <span className="font-medium">📱 Dispositivo:</span>
-                              <span className="text-primary">{device.device}</span>
-                              {device.model && (
-                                <span className="bg-primary/20 text-primary px-2 py-0.5 rounded text-xs font-medium">
-                                  {device.model}
-                                </span>
-                              )}
-                              <span className="text-muted-foreground">({device.os} • {device.browser})</span>
-                            </p>
-                            <p className="text-muted-foreground/50 truncate text-[10px]">{comment.user_agent}</p>
-                          </>
-                        )
-                      })()}
-                      <p><span className="font-medium">Data:</span> {formatDate(comment.created_at)}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              ...
             ))}
+            */}
 
             {activeTab === "reactions" && data.reactions.map((reaction) => (
               <div key={reaction.id} className="bg-card border border-border rounded-sm p-4">
@@ -660,8 +619,15 @@ export default function AdminPage() {
                     {(() => {
                       const device = parseDevice(reaction.user_agent || "")
                       return (
-                        <p className="text-xs text-muted-foreground/60">
-                          {device.device} {device.model && `(${device.model})`} • {device.os} • {formatDate(reaction.created_at)}
+                        <p className="text-xs flex items-center gap-2 flex-wrap">
+                          {device.model ? (
+                            <span className="bg-primary text-primary-foreground px-2 py-0.5 rounded font-bold text-xs">
+                              {device.model}
+                            </span>
+                          ) : (
+                            <span>{device.device}</span>
+                          )}
+                          <span className="text-muted-foreground">• {device.os} • {formatDate(reaction.created_at)}</span>
                         </p>
                       )
                     })()}
@@ -696,12 +662,13 @@ export default function AdminPage() {
                     return (
                       <>
                         <p className="text-xs flex items-center gap-2 flex-wrap">
-                          <span className="font-medium">📱 Dispositivo:</span>
-                          <span className="text-primary">{device.device}</span>
-                          {device.model && (
-                            <span className="bg-primary/20 text-primary px-2 py-0.5 rounded text-[10px] font-medium">
+                          <span className="font-medium">📱</span>
+                          {device.model ? (
+                            <span className="bg-primary text-primary-foreground px-2 py-0.5 rounded font-bold text-xs">
                               {device.model}
                             </span>
+                          ) : (
+                            <span className="text-primary">{device.device}</span>
                           )}
                           <span className="text-muted-foreground">• {device.os} • {device.browser}</span>
                         </p>
@@ -714,9 +681,6 @@ export default function AdminPage() {
               </div>
             ))}
 
-            {activeTab === "comments" && data.comments.length === 0 && (
-              <p className="text-center text-muted-foreground py-8">Nenhum comentário ainda.</p>
-            )}
             {activeTab === "reactions" && data.reactions.length === 0 && (
               <p className="text-center text-muted-foreground py-8">Nenhuma reação ainda.</p>
             )}
