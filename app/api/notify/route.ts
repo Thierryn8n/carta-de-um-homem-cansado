@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     `;
 
     const { error } = await resend.emails.send({
-      from: "Carta de Um Homem Cansado <notificacoes@carta-de-um-homem-cansado.com>",
+      from: "Carta de Um Homem Cansado <onboarding@resend.dev>",
       to: ADMIN_EMAIL,
       subject,
       html,
