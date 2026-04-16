@@ -123,12 +123,14 @@ export default function AdminPage() {
   }
 
   // Extrai nome amigável do dispositivo do User Agent
-  function parseDevice(userAgent: string): { device: string; os: string; browser: string } {
+  function parseDevice(userAgent: string): { device: string; os: string; browser: string; model?: string } {
     const ua = userAgent.toLowerCase()
+    const uaOriginal = userAgent
     
     let device = "💻 Desktop"
     let os = "Sistema Desconhecido"
     let browser = "Navegador Desconhecido"
+    let model: string | undefined
     
     // Detectar OS
     if (ua.includes("windows")) os = "Windows"
@@ -137,35 +139,98 @@ export default function AdminPage() {
     else if (ua.includes("android")) os = "Android"
     else if (ua.includes("iphone") || ua.includes("ipad") || ua.includes("ipod")) os = "iOS"
     
-    // Detectar dispositivo móvel
-    if (ua.includes("iphone")) device = "📱 iPhone"
-    else if (ua.includes("ipad")) device = "📱 iPad"
+    // Detectar dispositivo móvel com modelo
+    if (ua.includes("iphone")) {
+      device = "📱 iPhone"
+      // Tentar extrair modelo do iPhone de várias formas
+      // Alguns UAs podem ter hints sobre o modelo
+      const modelMatch = uaOriginal.match(/iPhone\s*\(?([^)]+)\)?/i)
+      if (modelMatch) {
+        model = modelMatch[1]
+      }
+      // Tentar detectar por versão do iOS (aproximado)
+      const iosMatch = ua.match(/cpu iphone os (\d+)[_\.]?(\d*)/)
+      if (iosMatch) {
+        const major = parseInt(iosMatch[1])
+        const minor = iosMatch[2] ? parseInt(iosMatch[2]) : 0
+        const iosVersion = `${major}.${minor || "x"}`
+        
+        // Heurística aproximada baseada na versão do iOS
+        if (major >= 16) model = model || "iPhone 14/15 series (iOS 16+)"
+        else if (major === 15) model = model || "iPhone 12/13 series (iOS 15)"
+        else if (major === 14) model = model || "iPhone 11/12 series (iOS 14)"
+        else if (major === 13) model = model || "iPhone XS/11 series (iOS 13)"
+        else if (major <= 12) model = model || `iPhone (iOS ${iosVersion})`
+      }
+    }
+    else if (ua.includes("ipad")) {
+      device = "📱 iPad"
+      const ipadMatch = uaOriginal.match(/iPad\s*\(?([^)]+)\)?/i)
+      if (ipadMatch) model = ipadMatch[1]
+    }
     else if (ua.includes("android")) {
       if (ua.includes("mobile")) device = "📱 Android"
       else device = "📱 Android Tablet"
       
-      // Tentar extrair modelo
-      const samsungMatch = ua.match(/samsung[^;)]+/)
-      const xiaomiMatch = ua.match(/xiaomi[^;)]+/)
-      const motorolaMatch = ua.match(/motorola[^;)]+/)
-      const lgMatch = ua.match(/lg-[^;)]+/)
+      // Tentar extrair modelo - várias estratégias
+      // Samsung
+      const samsungMatch = ua.match(/samsung[-\s]?([^;)\s]+)/)
+      if (samsungMatch) model = samsungMatch[1].toUpperCase()
       
-      if (samsungMatch) device += ` (${samsungMatch[0].toUpperCase()})`
-      else if (xiaomiMatch) device += ` (${xiaomiMatch[0].toUpperCase()})`
-      else if (motorolaMatch) device += ` (${motorolaMatch[0].toUpperCase()})`
-      else if (lgMatch) device += ` (${lgMatch[0].toUpperCase()})`
+      // Xiaomi/Redmi/Poco
+      const xiaomiMatch = ua.match(/xiaomi|redmi|poco/i)
+      if (xiaomiMatch && !model) {
+        const miMatch = ua.match(/(mi\s*\d+|redmi\s*[^;)\s]+|poco\s*[^;)\s]+)/i)
+        if (miMatch) model = miMatch[1].toUpperCase()
+      }
+      
+      // Motorola
+      const motoMatch = ua.match(/motorola|mot-|moto/i)
+      if (motoMatch && !model) {
+        const modelExtract = ua.match(/(moto\s*[^;)\s]+|xt\d+|moto\s*g\d*)/i)
+        if (modelExtract) model = modelExtract[1].toUpperCase()
+      }
+      
+      // LG
+      const lgMatch = ua.match(/lg[-\s]?([^;)\s]+)/i)
+      if (lgMatch && !model) model = lgMatch[1].toUpperCase()
+      
+      // OnePlus
+      const oneplusMatch = ua.match(/oneplus\s*([^;)\s]+)/i)
+      if (oneplusMatch && !model) model = "ONEPLUS " + oneplusMatch[1]
+      
+      // Google Pixel
+      const pixelMatch = ua.match(/pixel\s*(\d*[a-z]*)/i)
+      if (pixelMatch && !model) model = "PIXEL " + pixelMatch[1].toUpperCase()
+      
+      // Huawei
+      const huaweiMatch = ua.match(/huawei|honor/i)
+      if (huaweiMatch && !model) {
+        const hwModel = ua.match(/(ane|bnd|clt|ele|eml|evr|hlk|hma|ine|jkm|jsn|lld|lya|mar|par|sea|spn|sne|tah|vce|vog|vtr|wkg)/i)
+        if (hwModel) model = "HUAWEI " + hwModel[1].toUpperCase()
+      }
+      
+      // Generic Android device model from Build/
+      const buildMatch = ua.match(/build\/([^;)\s]+)/i)
+      if (buildMatch && !model) {
+        // Filtrar nomes genéricos
+        const buildModel = buildMatch[1]
+        if (!buildModel.match(/^(android|sdk|generic|unknown)/i)) {
+          model = buildModel.toUpperCase()
+        }
+      }
     }
     else if (ua.includes("windows phone")) device = "📱 Windows Phone"
     else if (ua.includes("blackberry")) device = "📱 BlackBerry"
     
     // Detectar navegador
-    if (ua.includes("chrome") && !ua.includes("edg")) browser = "Chrome"
+    if (ua.includes("chrome") && !ua.includes("edg") && !ua.includes("opr")) browser = "Chrome"
     else if (ua.includes("firefox")) browser = "Firefox"
     else if (ua.includes("safari") && !ua.includes("chrome")) browser = "Safari"
     else if (ua.includes("edg")) browser = "Edge"
     else if (ua.includes("opera") || ua.includes("opr")) browser = "Opera"
     
-    return { device, os, browser }
+    return { device, os, browser, model }
   }
 
   // Gera link do Google Maps com coordenadas ou cidade
@@ -395,9 +460,14 @@ export default function AdminPage() {
                         const device = parseDevice(comment.user_agent)
                         return (
                           <>
-                            <p className="flex items-center gap-2">
+                            <p className="flex items-center gap-2 flex-wrap">
                               <span className="font-medium">📱 Dispositivo:</span>
                               <span className="text-primary">{device.device}</span>
+                              {device.model && (
+                                <span className="bg-primary/20 text-primary px-2 py-0.5 rounded text-xs font-medium">
+                                  {device.model}
+                                </span>
+                              )}
                               <span className="text-muted-foreground">({device.os} • {device.browser})</span>
                             </p>
                             <p className="text-muted-foreground/50 truncate text-[10px]">{comment.user_agent}</p>
@@ -442,7 +512,7 @@ export default function AdminPage() {
                       const device = parseDevice(reaction.user_agent || "")
                       return (
                         <p className="text-xs text-muted-foreground/60">
-                          {device.device} • {device.os} • {formatDate(reaction.created_at)}
+                          {device.device} {device.model && `(${device.model})`} • {device.os} • {formatDate(reaction.created_at)}
                         </p>
                       )
                     })()}
@@ -476,10 +546,15 @@ export default function AdminPage() {
                     const device = parseDevice(visitor.user_agent)
                     return (
                       <>
-                        <p className="text-xs">
-                          <span className="font-medium">📱 Dispositivo:</span>{" "}
+                        <p className="text-xs flex items-center gap-2 flex-wrap">
+                          <span className="font-medium">📱 Dispositivo:</span>
                           <span className="text-primary">{device.device}</span>
-                          <span className="text-muted-foreground"> • {device.os} • {device.browser}</span>
+                          {device.model && (
+                            <span className="bg-primary/20 text-primary px-2 py-0.5 rounded text-[10px] font-medium">
+                              {device.model}
+                            </span>
+                          )}
+                          <span className="text-muted-foreground">• {device.os} • {device.browser}</span>
                         </p>
                         <p className="text-[10px] text-muted-foreground/40 truncate">{visitor.user_agent}</p>
                         <p className="text-xs text-muted-foreground/60">{formatDate(visitor.created_at)}</p>
