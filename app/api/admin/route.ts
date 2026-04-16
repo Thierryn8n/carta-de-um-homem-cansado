@@ -18,27 +18,55 @@ interface GeoData {
 // Cache simples para geolocalização (evita rate limit)
 const geoCache = new Map<string, GeoData>()
 
+// Função para limpar IP (remove IPv6 prefix, etc)
+function cleanIP(ip: string): string {
+  // Remove IPv6 prefix se existir
+  if (ip.includes(":")) {
+    // IPv6 ou IPv4 mapeado em IPv6 (::ffff:127.0.0.1)
+    const ipv4Match = ip.match(/::ffff:(\d+\.\d+\.\d+\.\d+)/)
+    if (ipv4Match) return ipv4Match[1]
+    return ip // retorna IPv6 puro
+  }
+  return ip
+}
+
 async function getGeoLocation(ip: string): Promise<GeoData | null> {
-  // Ignora IPs locais
-  if (ip === "127.0.0.1" || ip.startsWith("192.168.") || ip.startsWith("10.")) {
-    return { city: "Local", region: "Local", country: "Local" }
+  const cleanIp = cleanIP(ip)
+  
+  // Ignora IPs locais/inválidos
+  if (cleanIp === "127.0.0.1" || 
+      cleanIp === "unknown" || 
+      cleanIp.startsWith("192.168.") || 
+      cleanIp.startsWith("10.") ||
+      cleanIp.startsWith("172.16.") ||
+      cleanIp.startsWith("::1")) {
+    return { city: "🔄 Local/Rede Interna", region: "N/A", country: "N/A" }
   }
 
   // Verifica cache
-  if (geoCache.has(ip)) {
-    return geoCache.get(ip)!
+  if (geoCache.has(cleanIp)) {
+    return geoCache.get(cleanIp)!
   }
 
   try {
-    // ipapi.co é gratuito (45 req/min)
-    const res = await fetch(`https://ipapi.co/${ip}/json/`, {
-      headers: { "User-Agent": "Mozilla/5.0" },
-      next: { revalidate: 3600 } // cache por 1 hora
+    // ipapi.co é gratuito (45 req/min) - sem user-agent para evitar bloqueio
+    const res = await fetch(`https://ipapi.co/${cleanIp}/json/`, {
+      next: { revalidate: 3600 }
     })
 
-    if (!res.ok) return null
+    if (!res.ok) {
+      console.log(`Geo API error for IP ${cleanIp}: ${res.status}`)
+      return null
+    }
 
     const data = await res.json()
+    
+    // Verifica se a resposta tem erro
+    if (data.error || !data.city) {
+      console.log(`Geo data error for IP ${cleanIp}:`, data)
+      return null
+    }
+    
     const geo: GeoData = {
       city: data.city,
       region: data.region,
@@ -47,9 +75,10 @@ async function getGeoLocation(ip: string): Promise<GeoData | null> {
       longitude: data.longitude
     }
 
-    geoCache.set(ip, geo)
+    geoCache.set(cleanIp, geo)
     return geo
-  } catch {
+  } catch (err) {
+    console.error(`Geo location error for IP ${cleanIp}:`, err)
     return null
   }
 }

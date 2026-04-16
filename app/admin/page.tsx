@@ -273,14 +273,14 @@ export default function AdminPage() {
                   <div className="flex-1">
                     <p className="text-foreground mb-2">{comment.content}</p>
                     <div className="text-xs text-muted-foreground space-y-1">
-                      <p className="flex items-center gap-1">
+                      <p className="flex items-center gap-1 flex-wrap">
                         <span className="font-medium">IP:</span> {comment.ip_address}
-                        {comment.geo?.city && (
-                          <span className="inline-flex items-center gap-1 ml-2 text-primary">
-                            <MapPin className="w-3 h-3" />
-                            {comment.geo.city}, {comment.geo.region} - {comment.geo.country}
-                          </span>
-                        )}
+                        <span className="inline-flex items-center gap-1 ml-2 text-primary bg-primary/10 px-2 py-0.5 rounded text-xs">
+                          <MapPin className="w-3 h-3" />
+                          {comment.geo?.city 
+                            ? `${comment.geo.city}, ${comment.geo.region || comment.geo.country}` 
+                            : "📍 Localizando..."}
+                        </span>
                       </p>
                       <p><span className="font-medium">User Agent:</span> {comment.user_agent}</p>
                       <p><span className="font-medium">Data:</span> {formatDate(comment.created_at)}</p>
@@ -299,14 +299,14 @@ export default function AdminPage() {
                     <HeartCrack className="w-5 h-5 text-destructive" />
                   )}
                   <div className="flex-1">
-                    <p className="text-sm text-muted-foreground flex items-center gap-1">
+                    <p className="text-sm text-muted-foreground flex items-center gap-1 flex-wrap">
                       <span className="font-medium">IP:</span> {reaction.ip_address}
-                      {reaction.geo?.city && (
-                        <span className="inline-flex items-center gap-1 ml-2 text-primary">
-                          <MapPin className="w-3 h-3" />
-                          {reaction.geo.city}, {reaction.geo.country}
-                        </span>
-                      )}
+                      <span className="inline-flex items-center gap-1 ml-2 text-primary bg-primary/10 px-2 py-0.5 rounded text-xs">
+                        <MapPin className="w-3 h-3" />
+                        {reaction.geo?.city 
+                          ? `${reaction.geo.city}, ${reaction.geo.country || reaction.geo.region}` 
+                          : "📍 Localizando..."}
+                      </span>
                     </p>
                     <p className="text-xs text-muted-foreground/60">
                       {formatDate(reaction.created_at)}
@@ -319,14 +319,14 @@ export default function AdminPage() {
             {activeTab === "visitors" && data.visitors.map((visitor) => (
               <div key={visitor.id} className="bg-card border border-border rounded-sm p-4">
                 <div className="text-sm space-y-1">
-                  <p className="flex items-center gap-1">
+                  <p className="flex items-center gap-1 flex-wrap">
                     <span className="font-medium text-muted-foreground">IP:</span> {visitor.ip_address}
-                    {visitor.geo?.city && (
-                      <span className="inline-flex items-center gap-1 ml-2 text-primary">
-                        <MapPin className="w-3 h-3" />
-                        {visitor.geo.city}, {visitor.geo.region} - {visitor.geo.country}
-                      </span>
-                    )}
+                    <span className="inline-flex items-center gap-1 ml-2 text-primary bg-primary/10 px-2 py-0.5 rounded text-xs">
+                      <MapPin className="w-3 h-3" />
+                      {visitor.geo?.city 
+                        ? `${visitor.geo.city}, ${visitor.geo.region || visitor.geo.country}` 
+                        : "📍 Localizando..."}
+                    </span>
                   </p>
                   <p className="text-xs text-muted-foreground/60 truncate">
                     <span className="font-medium">User Agent:</span> {visitor.user_agent}
