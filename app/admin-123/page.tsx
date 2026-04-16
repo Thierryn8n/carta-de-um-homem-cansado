@@ -173,9 +173,34 @@ export default function AdminPage() {
       else device = "📱 Android Tablet"
       
       // Tentar extrair modelo - várias estratégias
-      // Samsung
+      // Samsung - múltiplos padrões
+      // Padrão 1: samsung-sm-g973b ou samsung sm-g973b
       const samsungMatch = ua.match(/samsung[-\s]?([^;)\s]+)/)
       if (samsungMatch) model = samsungMatch[1].toUpperCase()
+      
+      // Padrão 2: SM-G973B (formato padrão Samsung)
+      if (!model) {
+        const smMatch = ua.match(/(sm-[a-z]?\d{3}[a-z]?)/i)
+        if (smMatch) model = smMatch[1].toUpperCase()
+      }
+      
+      // Padrão 3: GT-I9500 (modelos antigos Galaxy)
+      if (!model) {
+        const gtMatch = ua.match(/(gt-[i|n|s]\d{4}[a-z]?)/i)
+        if (gtMatch) model = gtMatch[1].toUpperCase()
+      }
+      
+      // Padrão 4: SGH-T999 (modelos mais antigos)
+      if (!model) {
+        const sghMatch = ua.match(/(sgh-[a-z]\d{3,4})/i)
+        if (sghMatch) model = sghMatch[1].toUpperCase()
+      }
+      
+      // Padrão 5: SCG06 (modelos japoneses)
+      if (!model) {
+        const scgMatch = ua.match(/(sc[g|h|v]\d{2}[a-z]?)/i)
+        if (scgMatch) model = scgMatch[1].toUpperCase()
+      }
       
       // Xiaomi/Redmi/Poco
       const xiaomiMatch = ua.match(/xiaomi|redmi|poco/i)
