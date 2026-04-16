@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   manifest: "/admin-manifest.json",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "black-translucent",
+    statusBarStyle: "default",
     title: "Admin Carta"
   },
   icons: {
@@ -23,10 +23,8 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   themeColor: "#1a1a1a",
   width: "device-width",
-  initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
-  viewportFit: "cover"
+  initialScale: 1
+  // Removido: maximumScale, userScalable, viewportFit - causam problemas no iPhone
 }
 
 export default function AdminLayout({
@@ -35,13 +33,15 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   return (
-    <>
-      <link rel="manifest" href="/admin-manifest.json" />
-      <meta name="apple-mobile-web-app-capable" content="yes" />
-      <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-      <meta name="apple-mobile-web-app-title" content="Admin Carta" />
-      <meta name="mobile-web-app-capable" content="yes" />
-      {children}
-    </>
+    <html lang="pt-BR">
+      <head>
+        <link rel="manifest" href="/admin-manifest.json" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="Admin Carta" />
+        <meta name="mobile-web-app-capable" content="yes" />
+      </head>
+      <body>{children}</body>
+    </html>
   )
 }
