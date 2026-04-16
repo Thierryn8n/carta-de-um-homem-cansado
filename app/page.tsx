@@ -3,7 +3,7 @@
 import { useEffect } from "react"
 import { LetterCard } from "@/components/letter-card"
 import { Reactions } from "@/components/reactions"
-import { Comments } from "@/components/comments"
+// import { Comments } from "@/components/comments" // Oculto temporariamente
 
 export default function Home() {
   useEffect(() => {
@@ -66,13 +66,14 @@ export default function Home() {
           <Reactions />
         </div>
 
-        {/* Comentários */}
+        {/* Comentários - ocultos temporariamente
         <div
           className="animate-fade-in opacity-0"
           style={{ animationDelay: '1.2s', animationFillMode: 'forwards' }}
         >
           <Comments />
         </div>
+        */}
 
         {/* Footer minimalista */}
         <footer className="max-w-2xl mx-auto mt-24 md:mt-32 text-center">
