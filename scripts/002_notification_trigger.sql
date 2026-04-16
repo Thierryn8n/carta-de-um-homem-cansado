@@ -3,7 +3,7 @@ CREATE OR REPLACE FUNCTION notify_admin()
 RETURNS TRIGGER AS $$
 DECLARE
   payload JSONB;
-  webhook_url TEXT := 'https://carta-de-um-homem-cansado.vercel.app/api/notify';
+  webhook_url TEXT := 'https://homemcansado.vercel.app/api/notify';
 BEGIN
   -- Construir payload baseado no tipo de operação
   IF TG_TABLE_NAME = 'reactions' THEN
