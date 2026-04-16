@@ -1,8 +1,9 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Eye, Heart, HeartCrack, MessageCircle, Users, Shield, RefreshCw, MapPin } from "lucide-react"
+import { Eye, Heart, HeartCrack, MessageCircle, Users, Shield, RefreshCw, MapPin, Bell, BellOff, Smartphone } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useNotifications } from "@/hooks/use-notifications"
 
 interface GeoData {
   city?: string
@@ -56,6 +57,15 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [activeTab, setActiveTab] = useState<"visitors" | "reactions" | "comments">("comments")
+  
+  const { 
+    isSupported, 
+    permission, 
+    isSubscribed, 
+    subscribe, 
+    unsubscribe, 
+    testNotification 
+  } = useNotifications()
 
   async function fetchData() {
     if (!secret) return
@@ -131,15 +141,65 @@ export default function AdminPage() {
             <Shield className="w-6 h-6 text-primary" />
             <h1 className="text-xl font-serif">Painel Administrativo</h1>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={fetchData}
-            disabled={loading}
-          >
-            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-            Atualizar
-          </Button>
+          <div className="flex items-center gap-2">
+            {/* Botão de Notificações PWA */}
+            {isSupported && authenticated && (
+              <>
+                {isSubscribed ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={unsubscribe}
+                    title="Desativar notificações"
+                  >
+                    <BellOff className="w-4 h-4 mr-2" />
+                    Notificações
+                  </Button>
+                ) : permission === "granted" ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={subscribe}
+                    title="Ativar notificações push"
+                  >
+                    <Bell className="w-4 h-4 mr-2" />
+                    Ativar Push
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={subscribe}
+                    title="Permitir notificações"
+                  >
+                    <Smartphone className="w-4 h-4 mr-2" />
+                    Instalar App
+                  </Button>
+                )}
+                
+                {isSubscribed && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={testNotification}
+                    title="Testar notificação"
+                  >
+                    <Bell className="w-4 h-4 text-green-500" />
+                  </Button>
+                )}
+              </>
+            )}
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={fetchData}
+              disabled={loading}
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+              Atualizar
+            </Button>
+          </div>
         </header>
 
         {/* Stats */}
