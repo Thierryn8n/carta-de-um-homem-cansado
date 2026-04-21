@@ -8,6 +8,7 @@ export function Reactions() {
   const [dislikes, setDislikes] = useState(0)
   const [userReaction, setUserReaction] = useState<"like" | "dislike" | null>(null)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     fetchReactions()
@@ -16,18 +17,24 @@ export function Reactions() {
   async function fetchReactions() {
     try {
       const res = await fetch("/api/reactions")
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}))
+        console.error("[Reactions] GET error:", res.status, errorData)
+        return
+      }
       const data = await res.json()
       setLikes(data.likes)
       setDislikes(data.dislikes)
       setUserReaction(data.userReaction)
     } catch (error) {
-      console.error("Erro ao buscar reações:", error)
+      console.error("[Reactions] GET catch error:", error)
     }
   }
 
   async function handleReaction(type: "like" | "dislike") {
     if (loading) return
     setLoading(true)
+    setError(null)
 
     try {
       const res = await fetch("/api/reactions", {
@@ -36,21 +43,34 @@ export function Reactions() {
         body: JSON.stringify({ type }),
       })
       
-      if (res.ok) {
-        await fetchReactions()
+      const data = await res.json()
+      
+      if (!res.ok) {
+        console.error("[Reactions] POST error:", res.status, data)
+        setError(data.error || `Erro ${res.status}: ${data.details || "Desconhecido"}`)
+        return
       }
+      
+      await fetchReactions()
     } catch (error) {
-      console.error("Erro ao reagir:", error)
+      console.error("[Reactions] POST catch error:", error)
+      setError("Erro de conexão. Tente novamente.")
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="flex items-center justify-center gap-12">
-      <button
-        onClick={() => handleReaction("like")}
-        disabled={loading}
+    <div className="flex flex-col items-center gap-4">
+      {error && (
+        <div className="text-red-500 text-sm bg-red-500/10 px-4 py-2 rounded max-w-xs text-center">
+          {error}
+        </div>
+      )}
+      <div className="flex items-center justify-center gap-12">
+        <button
+          onClick={() => handleReaction("like")}
+          disabled={loading}
         className={`group flex flex-col items-center gap-3 transition-all duration-300 ${
           loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
         }`}
@@ -103,6 +123,7 @@ export function Reactions() {
           {dislikes}
         </span>
       </button>
+      </div>
     </div>
   )
 }
