@@ -43,12 +43,11 @@ export async function POST(request: Request) {
     const forwardedFor = headersList.get("x-forwarded-for")
     const realIp = headersList.get("x-real-ip")
     const ip = forwardedFor?.split(",")[0] || realIp || "unknown"
-    const userAgent = headersList.get("user-agent") || "unknown"
 
     const body = await request.json().catch(() => ({}))
     const { type } = body
 
-    console.log("[Reactions API] Received:", { type, ip, userAgent: userAgent?.substring(0, 50) })
+    console.log("[Reactions API] Received:", { type, ip })
 
     if (!type || !["like", "dislike"].includes(type)) {
       return NextResponse.json({ error: "Tipo inválido" }, { status: 400 })
@@ -88,21 +87,11 @@ export async function POST(request: Request) {
       }
     }
 
-    // Cria nova reação (tenta com user_agent, se falhar tenta sem)
-    let insertError = await supabase.from("reactions").insert({
+    // Cria nova reação
+    const { error: insertError } = await supabase.from("reactions").insert({
       ip_address: ip,
       reaction_type: type,
-      user_agent: userAgent,
-    }).then(r => r.error)
-
-    // Se erro é coluna não encontrada, tenta sem user_agent
-    if (insertError && insertError.message?.includes("user_agent")) {
-      console.log("[Reactions API] user_agent column not found, inserting without it")
-      insertError = await supabase.from("reactions").insert({
-        ip_address: ip,
-        reaction_type: type,
-      }).then(r => r.error)
-    }
+    })
 
     if (insertError) {
       console.error("[Reactions API] Insert error:", insertError)
