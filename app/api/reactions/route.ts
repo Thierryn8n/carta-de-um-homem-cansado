@@ -43,11 +43,12 @@ export async function POST(request: Request) {
     const forwardedFor = headersList.get("x-forwarded-for")
     const realIp = headersList.get("x-real-ip")
     const ip = forwardedFor?.split(",")[0] || realIp || "unknown"
+    const userAgent = headersList.get("user-agent") || "unknown"
 
     const body = await request.json().catch(() => ({}))
     const { type } = body
 
-    console.log("[Reactions API] Received:", { type, ip })
+    console.log("[Reactions API] Received:", { type, ip, userAgent: userAgent?.substring(0, 50) })
 
     if (!type || !["like", "dislike"].includes(type)) {
       return NextResponse.json({ error: "Tipo inválido" }, { status: 400 })
@@ -77,7 +78,7 @@ export async function POST(request: Request) {
         // Atualiza para o novo tipo
         const { error: updateError } = await supabase
           .from("reactions")
-          .update({ reaction_type: type })
+          .update({ reaction_type: type, user_agent: userAgent })
           .eq("ip_address", ip)
         if (updateError) {
           console.error("[Reactions API] Update error:", updateError)
@@ -91,6 +92,7 @@ export async function POST(request: Request) {
     const { error: insertError } = await supabase.from("reactions").insert({
       ip_address: ip,
       reaction_type: type,
+      user_agent: userAgent,
     })
 
     if (insertError) {
